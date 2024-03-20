@@ -28,6 +28,7 @@ int check_png(
     uint32_t length;
     const uint8_t *chunk_data;
     const uint8_t *ptr = data;
+    int found = 0;
 
     if (dataSize < 8 || memcmp(ptr, "\x89PNG\r\n\x1A\n", 8) != 0)
         return 0;
@@ -35,22 +36,24 @@ int check_png(
     for (index = 8; index < dataSize; index = next)
     {
         length = ntohl(*(uint32_t*)&ptr[index]);
-        next = index + length + 4;
+        next = index + 8 + length + 4;
         if (next > dataSize)
             break;
 
         chunk_data = &ptr[index + 4 + 4];
+        printf("tag: %.4s\n", &ptr[index + 4]);
+        printf("length: %d\n", length);
         if (memcmp(&ptr[index + 4], "IHDR", 4) == 0 && length == 13)
         {
             *width = ntohl(*(uint32_t*)&chunk_data[0]);
             *height = ntohl(*(uint32_t*)&chunk_data[4]);
             *bit_depth = chunk_data[8];
             *color_type = chunk_data[9];
-            return 1;
+            found = 1;
         }
     }
 
-    return 0;
+    return found;
 }
 
 int main(int argc, char* argv[])
